@@ -41,7 +41,7 @@ footer{font-size:.8rem;color:var(--mu);border-top:1px solid var(--ln);padding-to
 <body>
 <div class="w">
 <header><h1>راهنمای آزمایش‌های پزشکی</h1><p>نام آزمایش، محدوده طبیعی و معنی افزایش یا کاهش، به تفکیک اندام</p></header>
-<div class="bar"><input id="q" type="search" placeholder="جستجو: نام فارسی یا انگلیسی (مثلاً ALT، قند، تیروئید)" aria-label="جستجو"><div class="chips" id="chips"></div></div>
+<div class="bar"><input id="q" type="search" placeholder="جستجو: نام فارسی، انگلیسی یا مخفف (مثلاً ALT، قند، تیروئید)" aria-label="جستجو"><div id="count" class="cd" aria-live="polite"></div><div class="chips" id="chips"></div></div>
 <main id="out"></main>
 <footer>محدوده‌های طبیعی تقریبی‌اند و بسته به آزمایشگاه، سن و جنسیت تفاوت دارند. این صفحه جایگزین نظر پزشک نیست.</footer>
 </div>
@@ -281,7 +281,11 @@ var E={
 };
 function ex(k){var e=E[k];return e?'<p><b>آمادگی:</b> '+esc(e[0])+'</p><p><b>عوامل مداخله‌گر:</b> '+esc(e[1])+'</p><p><b>قدم بعدی:</b> '+esc(e[2])+'</p>':''}
 var q=document.getElementById('q'),out=document.getElementById('out'),chips=document.getElementById('chips'),cur='همه';
-function norm(s){return s.toLowerCase().replace(/ي/g,'ی').replace(/ك/g,'ک')}
+function norm(s){return s.toLowerCase().replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[ًٌٍَُِّْ]/g,'').replace(/[٠-٩]/g,function(x){return '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(x)]}).replace(/[۰-۹]/g,function(x){return '0123456789'['۰۱۲۳۴۵۶۷۸۹'.indexOf(x)]}).replace(/[^\wآ-ی]+/g,' ')}
+var aliases={
+'CBC':'complete blood count شمارش خون','WBC':'white blood cell لکوسیت','RBC':'red blood cell اریتروسیت','Hb':'hemoglobin هموگلوبین','Hct':'hematocrit','PLT':'platelet thrombocyte','MCV':'mean corpuscular volume','MCH':'mean corpuscular hemoglobin','MCHC':'mean corpuscular hemoglobin concentration','RDW':'red cell distribution width',
+'FBS':'fasting blood sugar glucose قند ناشتا','BS':'blood sugar glucose قند','HbA1c':'glycated hemoglobin قند سه ماهه','Cr':'creatinine کراتین','BUN':'urea اوره','eGFR':'glomerular filtration rate',
+'ALT':'alanine aminotransferase sgpt','AST':'aspartate aminotransferase sgot','ALP':'alkaline phosphatase','GGT':'gamma glutamyl transferase','LDL':'low density lipoprotein','HDL':'high density lipoprotein','TG':'triglyceride','Na':'sodium سدیم','K':'potassium پتاسیم','Ca':'calcium کلسیم','Mg':'magnesium منیزیم','TSH':'thyroid stimulating hormone','T4':'thyroxine','T3':'triiodothyronine','INR':'international normalized ratio','PT':'prothrombin time','PTT':'aptt activated partial thromboplastin time','D-dimer':'d dimer دی دایمر','Troponin':'troponin i t قلب'};
 function chip(n){var b=document.createElement('button');b.className='chip';b.textContent=n;b.setAttribute('aria-pressed',n===cur);b.onclick=function(){cur=n;draw()};chips.appendChild(b)}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
 function draw(){
@@ -289,13 +293,13 @@ chips.innerHTML='';chip('همه');D.forEach(function(g){chip(g.c)});
 var k=norm(q.value.trim()),h='',n=0;
 D.forEach(function(g){
 if(cur!=='همه'&&g.c!==cur)return;
-var items=g.t.filter(function(t){return !k||norm(t.slice(0,3).join(' ')+' '+g.c).indexOf(k)>-1});
+var items=g.t.filter(function(t){var base=t.slice(0,3).join(' ')+' '+g.c,alias=aliases[t[0]]||'';return !k||norm(base+' '+alias).indexOf(k)>-1||k.split(' ').filter(Boolean).every(function(part){return norm(base+' '+alias).indexOf(part)>-1})});
 if(!items.length)return;
 h+='<h2>'+g.c+'</h2><p class="cd">'+g.d+'</p>';
 items.forEach(function(t){n++;
 h+='<details><summary><b>'+esc(t[1])+'</b><small>'+esc(t[0])+'</small></summary><div class="bd"><p>'+esc(t[2])+'</p><p>محدوده طبیعی: <span class="r">'+esc(t[3])+'</span></p><p><span class="h">▲ افزایش:</span> '+esc(t[4])+'</p><p><span class="l">▼ کاهش:</span> '+esc(t[5])+'</p>'+ex(t[0])+'</div></details>'});
 });
-out.innerHTML=n?h:'<div class="em">آزمایشی پیدا نشد. نام انگلیسی یا بخشی از نام فارسی را امتحان کنید.</div>';
+document.getElementById('count').textContent=k?(n+' نتیجه'):(D.reduce(function(a,g){return a+g.t.length},0)+' آزمایش در مرجع');out.innerHTML=n?h:'<div class="em">آزمایشی پیدا نشد. نام انگلیسی، فارسی یا مخفف را امتحان کنید.</div>'; 
 }
 q.oninput=draw;draw();
 </script>
